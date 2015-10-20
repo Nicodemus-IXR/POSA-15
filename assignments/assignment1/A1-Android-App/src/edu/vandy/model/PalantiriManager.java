@@ -2,7 +2,10 @@ package edu.vandy.model;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
+
+import edu.vandy.utils.Options;
 
 /**
  * Defines a mechanism that mediates concurrent access to a fixed
@@ -40,7 +43,15 @@ public class PalantiriManager {
         // indicate it's available, and initialize the Semaphore to
         // use a "fair" implementation that mediates concurrent access
         // to the given number of Palantiri.
-        // TODO -- you fill in here.
+        // DONE
+
+        mPalantiriMap = new HashMap<>();
+        for (Palantir p: palantiri)
+        {
+            mPalantiriMap.put(p, true);
+        }
+
+        mAvailablePalantiri = new Semaphore(Options.instance().numberOfPalantiri(), true);
     }
 
     /**
@@ -54,7 +65,21 @@ public class PalantiriManager {
         // indicates it's available for use).  Replace the value of
         // this key with "false" to indicate the Palantir isn't
         // available and then return that palantir to the client.
-        // TODO -- you fill in here.
+        // DONE
+
+
+        mAvailablePalantiri.acquireUninterruptibly();
+        synchronized (mPalantiriMap)
+        {
+	        for (Map.Entry<Palantir, Boolean> p : mPalantiriMap.entrySet())
+	        {
+		        if (p.getValue() == true)
+		        {
+			        p.setValue(false);
+			        return p.getKey();
+		        }
+	        }
+        }
 
         return null; 
     }
@@ -67,7 +92,13 @@ public class PalantiriManager {
         // Put the "true" value back into HashMap for the palantir key
         // in a thread-safe manner and release the Semaphore if all
         // works properly.
-        // TODO -- you fill in here.
+        // DONE
+
+	    synchronized (mPalantiriMap)
+	    {
+		    mPalantiriMap.put(palantir, true);
+		    mAvailablePalantiri.release();
+	    }
     }
 
     /*
